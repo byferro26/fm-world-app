@@ -12,6 +12,10 @@ export async function registar(nome, email, password) {
   return user;
 }
 
+export async function pedirRecuperacao(email) {
+  await apiFetch("/auth/request-reset", { method: "POST", body: { email } });
+}
+
 export async function sair() {
   setToken(null);
 }

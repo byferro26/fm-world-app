@@ -2,8 +2,9 @@ import express from "express";
 import path from "path";
 import crypto from "crypto";
 import { fileURLToPath } from "url";
+import bcrypt from "bcryptjs";
 import { pool, migrate } from "./db.js";
-import { registerUser, loginUser, signToken, authMiddleware } from "./auth.js";
+import { registerUser, loginUser, signToken, authMiddleware, requireAdmin } from "./auth.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
@@ -45,6 +46,76 @@ app.get("/api/auth/me", authMiddleware, async (req, res) => {
   const r = await pool.query("SELECT id, email, nome, papel FROM users WHERE id=$1", [req.auth.uid]);
   if (!r.rows[0]) return res.status(404).json({ error: "not_found" });
   res.json({ user: r.rows[0] });
+});
+
+// Pedido de reposição de password: sem servidor de email disponível, o pedido
+// fica visível para um administrador tratar em Administração → Pedidos de acesso.
+app.post("/api/auth/request-reset", async (req, res) => {
+  const { email } = req.body || {};
+  if (!email) return res.status(400).json({ error: "Indica o teu email." });
+  const userRes = await pool.query("SELECT id FROM users WHERE email=$1", [String(email).toLowerCase().trim()]);
+  if (!userRes.rows[0]) {
+    // Não revela se o email existe ou não.
+    return res.json({ ok: true });
+  }
+  const id = crypto.randomUUID();
+  await pool.query("INSERT INTO documents (collection, id, data) VALUES ('reset_requests',$1,$2)", [
+    id,
+    { email: String(email).toLowerCase().trim(), userId: userRes.rows[0].id, estado: "Pendente" },
+  ]);
+  res.json({ ok: true });
+});
+
+// ---------- Administração (apenas admin) ----------
+app.get("/api/admin/users", authMiddleware, requireAdmin, async (req, res) => {
+  const r = await pool.query("SELECT id, email, nome, papel, created_at FROM users ORDER BY created_at ASC");
+  res.json(r.rows);
+});
+
+app.patch("/api/admin/users/:id", authMiddleware, requireAdmin, async (req, res) => {
+  const { papel, nome } = req.body || {};
+  if (papel && !["admin", "parceiro"].includes(papel)) return res.status(400).json({ error: "Papel inválido." });
+  if (req.params.id === req.auth.uid && papel === "parceiro") {
+    return res.status(400).json({ error: "Não podes remover o teu próprio acesso de administrador." });
+  }
+  const r = await pool.query(
+    "UPDATE users SET papel = COALESCE($1, papel), nome = COALESCE($2, nome) WHERE id=$3 RETURNING id, email, nome, papel, created_at",
+    [papel || null, nome || null, req.params.id]
+  );
+  if (!r.rows[0]) return res.status(404).json({ error: "not_found" });
+  res.json(r.rows[0]);
+});
+
+app.post("/api/admin/users/:id/reset-password", authMiddleware, requireAdmin, async (req, res) => {
+  const { novaPassword } = req.body || {};
+  const senha = novaPassword && String(novaPassword).length >= 6 ? String(novaPassword) : crypto.randomBytes(4).toString("hex");
+  const hash = await bcrypt.hash(senha, 10);
+  const r = await pool.query("UPDATE users SET password_hash=$1 WHERE id=$2 RETURNING email", [hash, req.params.id]);
+  if (!r.rows[0]) return res.status(404).json({ error: "not_found" });
+  // Resolve automaticamente qualquer pedido de reposição pendente para este utilizador.
+  await pool.query(
+    "UPDATE documents SET data = data || '{\"estado\":\"Resolvido\"}'::jsonb WHERE collection='reset_requests' AND data->>'userId' = $1",
+    [req.params.id]
+  );
+  res.json({ ok: true, password: senha });
+});
+
+app.delete("/api/admin/users/:id", authMiddleware, requireAdmin, async (req, res) => {
+  if (req.params.id === req.auth.uid) return res.status(400).json({ error: "Não podes remover a tua própria conta." });
+  await pool.query("DELETE FROM users WHERE id=$1", [req.params.id]);
+  res.json({ ok: true });
+});
+
+app.get("/api/admin/reset-requests", authMiddleware, requireAdmin, async (req, res) => {
+  const r = await pool.query(
+    "SELECT id, data, created_at FROM documents WHERE collection='reset_requests' ORDER BY created_at DESC"
+  );
+  res.json(r.rows.map((row) => ({ id: row.id, ...row.data, criadoEm: row.created_at })));
+});
+
+app.delete("/api/admin/reset-requests/:id", authMiddleware, requireAdmin, async (req, res) => {
+  await pool.query("DELETE FROM documents WHERE collection='reset_requests' AND id=$1", [req.params.id]);
+  res.json({ ok: true });
 });
 
 // ---------- Coleções genéricas (pessoas, produtos, agenda, tarefas, documentos, chat, financeiro, vendas) ----------

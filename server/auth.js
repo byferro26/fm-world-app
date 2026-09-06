@@ -42,3 +42,15 @@ export function authMiddleware(req, res, next) {
     return res.status(401).json({ error: "invalid_token" });
   }
 }
+
+// Confirma o papel diretamente na base de dados (não confia apenas no token,
+// que pode estar desatualizado se o papel mudou entretanto).
+export async function requireAdmin(req, res, next) {
+  try {
+    const r = await pool.query("SELECT papel FROM users WHERE id=$1", [req.auth.uid]);
+    if (r.rows[0]?.papel !== "admin") return res.status(403).json({ error: "Apenas administradores." });
+    next();
+  } catch (e) {
+    res.status(500).json({ error: "Erro ao validar permissões." });
+  }
+}

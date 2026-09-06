@@ -14,6 +14,7 @@ import Wiki from "./modules/Wiki";
 import Equipa from "./modules/Equipa";
 import Chat from "./modules/Chat";
 import Definicoes from "./modules/Definicoes";
+import Administracao from "./modules/Administracao";
 import { Spinner } from "./components/ui";
 import { sair } from "./lib/auth";
 
@@ -86,6 +87,7 @@ export default function App() {
           {view === "equipa" && <Equipa />}
           {view === "chat" && <Chat user={user} />}
           {view === "definicoes" && <Definicoes user={user} theme={theme} onSetTheme={setTheme} />}
+          {view === "administracao" && user?.papel === "admin" && <Administracao user={user} />}
         </main>
       </div>
     </div>

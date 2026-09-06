@@ -1,12 +1,12 @@
 import { useMemo, useState } from "react";
-import { Plus, Search, Trash2, Phone, Mail } from "lucide-react";
+import { Plus, Search, Trash2, Phone, Mail, Users2 } from "lucide-react";
 import { useCollection, addItem, updateItem, removeItem } from "../lib/db";
 import { Badge, Button, Card, Drawer, EmptyState, Field, Input, Modal, Select, Spinner, Textarea } from "../components/ui";
 
 const TIPOS = ["Contacto", "Cliente", "Parceiro"];
 const ESTADOS = ["Por contactar", "Contactado", "Em conversa", "Convertido", "Inativo"];
 
-const vazio = { nome: "", telefone: "", email: "", tipo: "Contacto", estado: "Por contactar", interesses: [], notas: "" };
+const vazio = { nome: "", telefone: "", email: "", tipo: "Contacto", estado: "Por contactar", patrocinadorId: "", notas: "" };
 
 export default function Pessoas() {
   const { items, loading } = useCollection("pessoas", { orderByField: "nome" });
@@ -22,6 +22,8 @@ export default function Pessoas() {
       return !q || p.nome?.toLowerCase().includes(q) || p.email?.toLowerCase().includes(q);
     });
   }, [items, query, filtroTipo]);
+
+  const nomePorId = (id) => items.find((p) => p.id === id)?.nome;
 
   return (
     <div className="space-y-4 fm-fade-in">
@@ -58,7 +60,12 @@ export default function Pessoas() {
               </div>
               <div className="min-w-0 flex-1">
                 <p className="truncate text-sm font-medium">{p.nome}</p>
-                <p className="truncate text-xs text-[var(--ink-soft)]">{p.email || p.telefone || "—"}</p>
+                <p className="truncate text-xs text-[var(--ink-soft)]">
+                  {p.email || p.telefone || "—"}
+                  {p.tipo === "Parceiro" && p.patrocinadorId && (
+                    <span className="ml-2 inline-flex items-center gap-1"><Users2 size={11} /> {nomePorId(p.patrocinadorId) || "—"}</span>
+                  )}
+                </p>
               </div>
               <Badge tone={p.tipo === "Parceiro" ? "wine" : p.tipo === "Cliente" ? "sage" : "neutral"}>{p.tipo}</Badge>
               <Badge tone="neutral" className="hidden sm:inline-flex">{p.estado}</Badge>
@@ -70,6 +77,7 @@ export default function Pessoas() {
       {aCriar && (
         <PessoaForm
           initial={vazio}
+          pessoas={items}
           onClose={() => setACriar(false)}
           onSave={async (data) => {
             await addItem("pessoas", data);
@@ -82,6 +90,7 @@ export default function Pessoas() {
         <Drawer title={aberto.nome} subtitle={aberto.tipo} onClose={() => setAberto(null)}>
           <PessoaDetalhe
             pessoa={aberto}
+            pessoas={items}
             onSave={async (data) => {
               await updateItem("pessoas", aberto.id, data);
               setAberto({ ...aberto, ...data });
@@ -97,7 +106,20 @@ export default function Pessoas() {
   );
 }
 
-function PessoaForm({ initial, onClose, onSave }) {
+function CampoPatrocinador({ form, set, pessoas, pessoaAtualId }) {
+  if (form.tipo !== "Parceiro") return null;
+  const opcoes = pessoas.filter((p) => p.tipo === "Parceiro" && p.id !== pessoaAtualId);
+  return (
+    <Field label="Patrocinador (quem o trouxe para a rede)">
+      <Select value={form.patrocinadorId || ""} onChange={set("patrocinadorId")}>
+        <option value="">Nenhum — topo da rede</option>
+        {opcoes.map((p) => <option key={p.id} value={p.id}>{p.nome}</option>)}
+      </Select>
+    </Field>
+  );
+}
+
+function PessoaForm({ initial, pessoas, onClose, onSave }) {
   const [form, setForm] = useState(initial);
   const [saving, setSaving] = useState(false);
   const set = (k) => (e) => setForm({ ...form, [k]: e.target.value });
@@ -140,16 +162,18 @@ function PessoaForm({ initial, onClose, onSave }) {
             </Select>
           </Field>
         </div>
+        <CampoPatrocinador form={form} set={set} pessoas={pessoas} pessoaAtualId={null} />
         <Field label="Notas"><Textarea value={form.notas} onChange={set("notas")} rows={3} /></Field>
       </div>
     </Modal>
   );
 }
 
-function PessoaDetalhe({ pessoa, onSave, onDelete }) {
+function PessoaDetalhe({ pessoa, pessoas, onSave, onDelete }) {
   const [form, setForm] = useState(pessoa);
   const [editando, setEditando] = useState(false);
   const set = (k) => (e) => setForm({ ...form, [k]: e.target.value });
+  const patrocinador = pessoas.find((p) => p.id === form.patrocinadorId);
 
   if (!editando) {
     return (
@@ -161,6 +185,9 @@ function PessoaDetalhe({ pessoa, onSave, onDelete }) {
         <div className="space-y-2 text-sm">
           {form.telefone && <p className="flex items-center gap-2"><Phone size={14} className="text-[var(--ink-soft)]" /> {form.telefone}</p>}
           {form.email && <p className="flex items-center gap-2"><Mail size={14} className="text-[var(--ink-soft)]" /> {form.email}</p>}
+          {form.tipo === "Parceiro" && (
+            <p className="flex items-center gap-2"><Users2 size={14} className="text-[var(--ink-soft)]" /> Patrocinador: {patrocinador?.nome || "— (topo da rede)"}</p>
+          )}
         </div>
         {form.notas && (
           <div>
@@ -191,6 +218,7 @@ function PessoaDetalhe({ pessoa, onSave, onDelete }) {
           <Select value={form.estado} onChange={set("estado")}>{ESTADOS.map((e) => <option key={e}>{e}</option>)}</Select>
         </Field>
       </div>
+      <CampoPatrocinador form={form} set={set} pessoas={pessoas} pessoaAtualId={pessoa.id} />
       <Field label="Notas"><Textarea value={form.notas} onChange={set("notas")} rows={4} /></Field>
       <div className="flex gap-2 pt-2">
         <Button variant="secondary" onClick={() => setEditando(false)}>Cancelar</Button>

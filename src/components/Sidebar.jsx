@@ -10,6 +10,7 @@ import {
   Network,
   MessageCircle,
   Settings,
+  ShieldCheck,
   LogOut,
   X,
 } from "lucide-react";
@@ -80,6 +81,19 @@ export default function Sidebar({ active, onNavigate, user, onSignOut, open, onC
             <Settings size={17} />
             Definições
           </button>
+          {user?.papel === "admin" && (
+            <button
+              onClick={() => onNavigate("administracao")}
+              className={`flex w-full items-center gap-3 rounded-[var(--radius-sm)] px-3 py-2.5 text-sm transition ${
+                active === "administracao"
+                  ? "bg-[var(--wine)] text-white"
+                  : "text-[var(--ink-on-dark-soft)] hover:bg-white/5 hover:text-[var(--ink-on-dark)]"
+              }`}
+            >
+              <ShieldCheck size={17} />
+              Administração
+            </button>
+          )}
         </nav>
 
         <div className="border-t border-white/10 px-4 py-4">

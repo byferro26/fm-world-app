@@ -1,50 +1,60 @@
 @import "tailwindcss";
 
+/* ---------------------------------------------------------------------- */
+/* FM World — tema "escritório pessoal": tons quentes de madeira, linho    */
+/* e terracota, tipografia serifada acolhedora (Fraunces + Figtree).      */
+/* ---------------------------------------------------------------------- */
+
 :root{
-  --bg:#E3DCCC;
-  --bg-panel:#F8F4EA;
-  --bg-panel-alt:#EFE7D4;
-  --sidebar:#292420;
-  --ink:#2B2620;
-  --ink-soft:#6E6558;
-  --ink-on-dark:#EFE7D6;
-  --ink-on-dark-soft:#B4A996;
-  --line:#D8CDB4;
-  --wine:#6B3346;
-  --wine-soft:#8C5468;
-  --sage:#64714C;
-  --sage-soft:#8A9A6C;
-  --rust:#A9502F;
-  --rust-soft:#C77A55;
-  --gold:#9C7A34;
-  --shadow: 0 1px 2px rgba(43,38,32,0.06), 0 8px 24px rgba(43,38,32,0.10);
-  --radius: 14px;
-  --radius-sm: 9px;
+  --bg:#F5EEE1;
+  --bg-panel:#FFFCF5;
+  --bg-panel-alt:#EEE1CB;
+  --sidebar:#2C231B;
+  --ink:#3A2E22;
+  --ink-soft:#8C7A63;
+  --ink-on-dark:#F4E9D8;
+  --ink-on-dark-soft:#BBA98D;
+  --line:#E3D2B4;
+  --line-soft:#EDE1C9;
+
+  /* acentos — nomes mantidos por compatibilidade com os componentes,
+     valores redefinidos para a nova paleta terracota/musgo/mel */
+  --wine:#BD5B37;
+  --wine-soft:#D98860;
+  --sage:#707C4E;
+  --sage-soft:#96A172;
+  --rust:#9C4A3C;
+  --rust-soft:#C07E67;
+  --gold:#B07C2C;
+
+  --shadow: 0 1px 2px rgba(58,46,34,0.06), 0 10px 28px rgba(58,46,34,0.10);
+  --radius: 16px;
+  --radius-sm: 10px;
   color-scheme: light;
 }
 
 :root[data-theme="dark"]{
-  --bg:#1A1714;
-  --bg-panel:#242019;
-  --bg-panel-alt:#2C271F;
-  --sidebar:#141210;
-  --ink:#EFE7D6;
-  --ink-soft:#B4A996;
-  --line:#3A342A;
-  --shadow: 0 1px 2px rgba(0,0,0,0.3), 0 8px 24px rgba(0,0,0,0.35);
+  --bg:#20180F;
+  --bg-panel:#291F14;
+  --bg-panel-alt:#332619;
+  --sidebar:#160F09;
+  --ink:#F1E4CF;
+  --ink-soft:#B7A488;
+  --line:#3D2E1D;
+  --shadow: 0 1px 2px rgba(0,0,0,0.35), 0 10px 28px rgba(0,0,0,0.4);
   color-scheme: dark;
 }
 
 @media (prefers-color-scheme: dark){
   :root:not([data-theme="light"]){
-    --bg:#1A1714;
-    --bg-panel:#242019;
-    --bg-panel-alt:#2C271F;
-    --sidebar:#141210;
-    --ink:#EFE7D6;
-    --ink-soft:#B4A996;
-    --line:#3A342A;
-    --shadow: 0 1px 2px rgba(0,0,0,0.3), 0 8px 24px rgba(0,0,0,0.35);
+    --bg:#20180F;
+    --bg-panel:#291F14;
+    --bg-panel-alt:#332619;
+    --sidebar:#160F09;
+    --ink:#F1E4CF;
+    --ink-soft:#B7A488;
+    --line:#3D2E1D;
+    --shadow: 0 1px 2px rgba(0,0,0,0.35), 0 10px 28px rgba(0,0,0,0.4);
     color-scheme: dark;
   }
 }
@@ -55,12 +65,16 @@ body{
   margin: 0;
   background: var(--bg);
   color: var(--ink);
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  font-family: 'Figtree', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
 }
 ::-webkit-scrollbar{ width: 10px; height: 10px; }
 ::-webkit-scrollbar-thumb{ background: var(--line); border-radius: 8px; }
 
-.font-display{ font-family: Georgia, 'Iowan Old Style', 'Palatino Linotype', 'Book Antiqua', serif; }
+.font-display{
+  font-family: 'Fraunces', Georgia, 'Iowan Old Style', serif;
+  font-optical-sizing: auto;
+  letter-spacing: -0.01em;
+}
 
 @keyframes fm-fade-in{ from{ opacity:0; transform: translateY(4px); } to{ opacity:1; transform: translateY(0); } }
 .fm-fade-in{ animation: fm-fade-in .18s ease-out; }

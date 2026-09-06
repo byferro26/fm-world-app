@@ -1,21 +1,28 @@
 import { useState } from "react";
 import { Leaf } from "lucide-react";
-import { entrar, registar } from "../lib/auth";
+import { entrar, registar, pedirRecuperacao } from "../lib/auth";
 import { Button, Card, Field, Input } from "../components/ui";
 
 export default function Login({ onLogin }) {
-  const [modo, setModo] = useState("entrar"); // "entrar" | "criar"
+  const [modo, setModo] = useState("entrar"); // "entrar" | "criar" | "recuperar"
   const [nome, setNome] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [erro, setErro] = useState("");
+  const [aviso, setAviso] = useState("");
   const [loading, setLoading] = useState(false);
 
   async function submeter(e) {
     e.preventDefault();
     setErro("");
+    setAviso("");
     setLoading(true);
     try {
+      if (modo === "recuperar") {
+        await pedirRecuperacao(email);
+        setAviso("Pedido enviado. Um administrador vai repor a tua palavra-passe em breve.");
+        return;
+      }
       let user;
       if (modo === "entrar") {
         user = await entrar(email, password);
@@ -57,29 +64,42 @@ export default function Login({ onLogin }) {
               required
             />
           </Field>
-          <Field label="Palavra-passe">
-            <Input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="••••••••"
-              minLength={6}
-              required
-            />
-          </Field>
+          {modo !== "recuperar" && (
+            <Field label="Palavra-passe">
+              <Input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="••••••••"
+                minLength={6}
+                required
+              />
+            </Field>
+          )}
+
+          {modo === "entrar" && (
+            <button
+              type="button"
+              className="block text-xs text-[var(--ink-soft)] hover:text-[var(--wine)] -mt-2"
+              onClick={() => { setModo("recuperar"); setErro(""); setAviso(""); }}
+            >
+              Esqueceste-te da palavra-passe?
+            </button>
+          )}
 
           {erro && <p className="text-sm text-[var(--rust)]">{erro}</p>}
+          {aviso && <p className="text-sm text-[var(--sage)]">{aviso}</p>}
 
           <Button type="submit" disabled={loading} className="w-full">
-            {loading ? "Aguarda..." : modo === "entrar" ? "Entrar" : "Criar conta"}
+            {loading ? "Aguarda..." : modo === "entrar" ? "Entrar" : modo === "criar" ? "Criar conta" : "Pedir reposição"}
           </Button>
         </form>
 
         <button
           className="mt-4 w-full text-center text-sm text-[var(--ink-soft)] hover:text-[var(--ink)]"
-          onClick={() => setModo(modo === "entrar" ? "criar" : "entrar")}
+          onClick={() => { setModo(modo === "entrar" ? "criar" : "entrar"); setErro(""); setAviso(""); }}
         >
-          {modo === "entrar" ? "Ainda não tens conta? Cria uma" : "Já tens conta? Entra"}
+          {modo === "criar" ? "Já tens conta? Entra" : modo === "recuperar" ? "Voltar a entrar" : "Ainda não tens conta? Cria uma"}
         </button>
       </Card>
     </div>
