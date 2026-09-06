@@ -1,7 +1,8 @@
 import { useMemo, useState } from "react";
-import { Plus, Trash2, Clock, MapPin } from "lucide-react";
+import { Plus, Trash2, Clock, MapPin, List, Calendar as CalendarIcon } from "lucide-react";
 import { useCollection, addItem, removeItem, updateItem } from "../lib/db";
 import { Badge, Button, Card, EmptyState, Field, Input, Modal, Select, Spinner, Textarea } from "../components/ui";
+import Calendario from "../components/Calendario";
 
 const TIPOS = ["Reunião", "Formação", "Evento", "Chamada", "Sessão com Cliente", "Entrega", "Outro"];
 const ESTADOS = ["Agendado", "Confirmado", "Concluído", "Cancelado"];
@@ -10,6 +11,8 @@ const vazio = { titulo: "", tipo: "Reunião", data: new Date().toISOString().sli
 export default function Agenda() {
   const { items, loading } = useCollection("agenda", { orderByField: "data" });
   const [aCriar, setACriar] = useState(false);
+  const [vista, setVista] = useState("calendario"); // "calendario" | "lista"
+  const [diaPreSelecionado, setDiaPreSelecionado] = useState(null);
 
   const grupos = useMemo(() => {
     const map = new Map();
@@ -25,19 +28,40 @@ export default function Agenda() {
 
   return (
     <div className="space-y-4 fm-fade-in">
-      <div className="flex justify-end">
-        <Button onClick={() => setACriar(true)}><Plus size={16} /> Novo compromisso</Button>
+      <div className="flex items-center justify-between">
+        <div className="flex rounded-[var(--radius-sm)] border border-[var(--line)] overflow-hidden">
+          <button
+            className={`flex items-center gap-1.5 px-3 py-1.5 text-sm ${vista === "calendario" ? "bg-[var(--wine)] text-white" : "bg-[var(--bg-panel)] text-[var(--ink-soft)] hover:bg-[var(--bg-panel-alt)]"}`}
+            onClick={() => setVista("calendario")}
+          >
+            <CalendarIcon size={14} /> Calendário
+          </button>
+          <button
+            className={`flex items-center gap-1.5 px-3 py-1.5 text-sm border-l border-[var(--line)] ${vista === "lista" ? "bg-[var(--wine)] text-white" : "bg-[var(--bg-panel)] text-[var(--ink-soft)] hover:bg-[var(--bg-panel-alt)]"}`}
+            onClick={() => setVista("lista")}
+          >
+            <List size={14} /> Lista
+          </button>
+        </div>
+        <Button onClick={() => { setDiaPreSelecionado(null); setACriar(true); }}><Plus size={16} /> Novo compromisso</Button>
       </div>
 
       {loading ? (
         <div className="flex h-48 items-center justify-center"><Spinner /></div>
+      ) : vista === "calendario" ? (
+        <Card className="p-4">
+          <Calendario
+            eventos={items}
+            onSelecionarDia={(iso) => { setDiaPreSelecionado(iso); setACriar(true); }}
+          />
+        </Card>
       ) : grupos.length === 0 ? (
         <EmptyState title="Sem compromissos" hint="Agenda reuniões, formações e entregas." />
       ) : (
         <div className="space-y-5">
           {grupos.map(([data, eventos]) => (
             <div key={data}>
-              <p className={`mb-2 text-xs font-semibold uppercase tracking-wide ${data === hojeStr ? "text-[var(--wine)]" : "text-[var(--ink-soft)]"}`}>
+              <p className={`mb-2 font-display text-lg ${data === hojeStr ? "text-[var(--wine)]" : "text-[var(--ink)]"}`}>
                 {formatarData(data)} {data === hojeStr && "· Hoje"}
               </p>
               <Card className="divide-y divide-[var(--line)] overflow-hidden">
@@ -71,6 +95,7 @@ export default function Agenda() {
 
       {aCriar && (
         <AgendaForm
+          initial={diaPreSelecionado ? { ...vazio, data: diaPreSelecionado } : vazio}
           onClose={() => setACriar(false)}
           onSave={async (data) => { await addItem("agenda", data); setACriar(false); }}
         />
@@ -88,8 +113,8 @@ function formatarData(iso) {
   }
 }
 
-function AgendaForm({ onClose, onSave }) {
-  const [form, setForm] = useState(vazio);
+function AgendaForm({ initial, onClose, onSave }) {
+  const [form, setForm] = useState(initial || vazio);
   const [saving, setSaving] = useState(false);
   const set = (k) => (e) => setForm({ ...form, [k]: e.target.value });
 

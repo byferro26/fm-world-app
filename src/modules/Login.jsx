@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Leaf } from "lucide-react";
+import { Droplet } from "lucide-react";
 import { entrar, registar, pedirRecuperacao } from "../lib/auth";
 import { Button, Card, Field, Input } from "../components/ui";
 
@@ -42,8 +42,8 @@ export default function Login({ onLogin }) {
     <div className="min-h-screen flex items-center justify-center bg-[var(--bg)] px-4">
       <Card className="w-full max-w-sm p-7">
         <div className="flex flex-col items-center text-center mb-6">
-          <div className="h-11 w-11 rounded-full bg-[var(--wine)] text-white flex items-center justify-center mb-3">
-            <Leaf size={20} />
+          <div className="h-11 w-11 rounded-full border-2 border-[var(--brass)] bg-[var(--wine)] text-white flex items-center justify-center mb-3">
+            <Droplet size={19} />
           </div>
           <h1 className="font-display text-xl text-[var(--ink)]">FM World</h1>
           <p className="text-sm text-[var(--ink-soft)]">Gestão de Negócio</p>

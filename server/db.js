@@ -26,5 +26,9 @@ export async function migrate() {
     );
 
     CREATE INDEX IF NOT EXISTS idx_documents_collection ON documents(collection);
+
+    INSERT INTO documents (collection, id, data)
+    VALUES ('settings', '00000000-0000-0000-0000-000000000001', '{"plano":"free"}'::jsonb)
+    ON CONFLICT (collection, id) DO NOTHING;
   `);
 }

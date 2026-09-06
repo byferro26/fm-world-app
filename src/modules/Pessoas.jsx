@@ -191,7 +191,7 @@ function PessoaDetalhe({ pessoa, pessoas, onSave, onDelete }) {
         </div>
         {form.notas && (
           <div>
-            <p className="text-xs font-medium uppercase tracking-wide text-[var(--ink-soft)] mb-1">Notas</p>
+            <p className="text-[13px] text-[var(--ink-soft)] mb-1">Notas</p>
             <p className="text-sm whitespace-pre-wrap">{form.notas}</p>
           </div>
         )}

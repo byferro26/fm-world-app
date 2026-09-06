@@ -12,6 +12,7 @@ import {
   Settings,
   ShieldCheck,
   LogOut,
+  Lock,
   X,
 } from "lucide-react";
 
@@ -23,12 +24,15 @@ export const NAV_ITEMS = [
   { id: "financeiro", label: "Financeiro", icon: Wallet },
   { id: "agenda", label: "Agenda", icon: Calendar },
   { id: "tarefas", label: "Tarefas", icon: Kanban },
-  { id: "wiki", label: "Documentos", icon: BookOpen },
+  { id: "wiki", label: "Documentos", icon: BookOpen, proKey: "documentos" },
   { id: "equipa", label: "Equipa & Rede", icon: Network },
-  { id: "chat", label: "Chat", icon: MessageCircle },
+  { id: "chat", label: "Chat", icon: MessageCircle, proKey: "chat" },
 ];
 
-export default function Sidebar({ active, onNavigate, user, onSignOut, open, onCloseMobile }) {
+export default function Sidebar({ active, onNavigate, user, plano, onSignOut, open, onCloseMobile }) {
+  function bloqueado(item) {
+    return item.proKey && plano?.plano === "free" && plano?.modulosPro?.includes(item.proKey);
+  }
   return (
     <>
       {open && (
@@ -42,8 +46,8 @@ export default function Sidebar({ active, onNavigate, user, onSignOut, open, onC
         <div className="flex items-center justify-between px-5 py-5">
           <div>
             <p className="font-display text-lg leading-none">FM World</p>
-            <p className="text-[11px] text-[var(--ink-on-dark-soft)] mt-1 tracking-wide uppercase">
-              Gestão de Negócio
+            <p className="text-[11px] text-[var(--ink-on-dark-soft)] mt-1">
+              gestão de negócio
             </p>
           </div>
           <button className="md:hidden text-[var(--ink-on-dark-soft)]" onClick={onCloseMobile}>
@@ -55,6 +59,7 @@ export default function Sidebar({ active, onNavigate, user, onSignOut, open, onC
           {NAV_ITEMS.map((item) => {
             const Icon = item.icon;
             const isActive = active === item.id;
+            const cadeado = bloqueado(item);
             return (
               <button
                 key={item.id}
@@ -66,7 +71,8 @@ export default function Sidebar({ active, onNavigate, user, onSignOut, open, onC
                 }`}
               >
                 <Icon size={17} />
-                {item.label}
+                <span className="flex-1 text-left">{item.label}</span>
+                {cadeado && <Lock size={13} className="opacity-70" />}
               </button>
             );
           })}

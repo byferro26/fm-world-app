@@ -1,60 +1,64 @@
 @import "tailwindcss";
 
 /* ---------------------------------------------------------------------- */
-/* FM World — tema "escritório pessoal": tons quentes de madeira, linho    */
-/* e terracota, tipografia serifada acolhedora (Fraunces + Figtree).      */
+/* FM World — tema "Atelier": paredes em ameixa escura, painéis em marfim  */
+/* como vitrines, latão como acento estrutural. Bodoni Moda + Inter.       */
+/* Ancorado no negócio real: perfumaria, cosmética, bem-estar.             */
 /* ---------------------------------------------------------------------- */
 
 :root{
-  --bg:#F5EEE1;
-  --bg-panel:#FFFCF5;
-  --bg-panel-alt:#EEE1CB;
-  --sidebar:#2C231B;
-  --ink:#3A2E22;
-  --ink-soft:#8C7A63;
-  --ink-on-dark:#F4E9D8;
-  --ink-on-dark-soft:#BBA98D;
-  --line:#E3D2B4;
-  --line-soft:#EDE1C9;
+  --wall:#241B2B;          /* reservado para o chrome escuro (barra lateral) */
+  --bg:#F1E9DA;             /* área de trabalho — pedra clara */
+  --bg-panel:#FAF6EE;       /* vitrine — marfim, não creme amarelado */
+  --bg-panel-alt:#EAE0CC;
+  --sidebar:#1B1420;
+  --ink:#241B26;
+  --ink-soft:#7C7286;
+  --ink-on-dark:#F2ECDF;
+  --ink-on-dark-soft:#9C90A6;
+  --line:#DED2C6;
+  --line-soft:#EAE1D2;
 
-  /* acentos — nomes mantidos por compatibilidade com os componentes,
-     valores redefinidos para a nova paleta terracota/musgo/mel */
-  --wine:#BD5B37;
-  --wine-soft:#D98860;
-  --sage:#707C4E;
-  --sage-soft:#96A172;
-  --rust:#9C4A3C;
-  --rust-soft:#C07E67;
-  --gold:#B07C2C;
+  /* acentos — nomes mantidos por compatibilidade, valores redefinidos */
+  --wine:#7A2E3D;      /* bordô profundo — ação primária */
+  --wine-soft:#A5566A;
+  --sage:#54685C;      /* verde-cobre envelhecido — secundário */
+  --sage-soft:#7C917F;
+  --rust:#9C5A3C;      /* terracota queimado — usado com moderação */
+  --rust-soft:#BC8768;
+  --gold:#A9843F;      /* latão — acento estrutural, não decorativo */
 
-  --shadow: 0 1px 2px rgba(58,46,34,0.06), 0 10px 28px rgba(58,46,34,0.10);
-  --radius: 16px;
-  --radius-sm: 10px;
+  --brass:#A9843F;
+  --shadow: 0 1px 0 rgba(36,27,43,0.06);
+  --radius: 4px;
+  --radius-sm: 3px;
   color-scheme: light;
 }
 
 :root[data-theme="dark"]{
-  --bg:#20180F;
-  --bg-panel:#291F14;
-  --bg-panel-alt:#332619;
-  --sidebar:#160F09;
-  --ink:#F1E4CF;
-  --ink-soft:#B7A488;
-  --line:#3D2E1D;
-  --shadow: 0 1px 2px rgba(0,0,0,0.35), 0 10px 28px rgba(0,0,0,0.4);
+  --wall:#0B0906;
+  --bg:#181209;
+  --bg-panel:#1E1811;
+  --bg-panel-alt:#271F16;
+  --sidebar:#0E0B08;
+  --ink:#EDE4D3;
+  --ink-soft:#A69A85;
+  --line:#3A2F21;
+  --shadow: 0 1px 0 rgba(0,0,0,0.4);
   color-scheme: dark;
 }
 
 @media (prefers-color-scheme: dark){
   :root:not([data-theme="light"]){
-    --bg:#20180F;
-    --bg-panel:#291F14;
-    --bg-panel-alt:#332619;
-    --sidebar:#160F09;
-    --ink:#F1E4CF;
-    --ink-soft:#B7A488;
-    --line:#3D2E1D;
-    --shadow: 0 1px 2px rgba(0,0,0,0.35), 0 10px 28px rgba(0,0,0,0.4);
+    --wall:#0B0906;
+    --bg:#181209;
+    --bg-panel:#1E1811;
+    --bg-panel-alt:#271F16;
+    --sidebar:#0E0B08;
+    --ink:#EDE4D3;
+    --ink-soft:#A69A85;
+    --line:#3A2F21;
+    --shadow: 0 1px 0 rgba(0,0,0,0.4);
     color-scheme: dark;
   }
 }
@@ -63,18 +67,25 @@
 html, body, #root{ height: 100%; }
 body{
   margin: 0;
-  background: var(--bg);
+  background: var(--wall);
   color: var(--ink);
-  font-family: 'Figtree', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
 }
 ::-webkit-scrollbar{ width: 10px; height: 10px; }
 ::-webkit-scrollbar-thumb{ background: var(--line); border-radius: 8px; }
 
 .font-display{
-  font-family: 'Fraunces', Georgia, 'Iowan Old Style', serif;
+  font-family: 'Bodoni Moda', Georgia, 'Times New Roman', serif;
   font-optical-sizing: auto;
   letter-spacing: -0.01em;
 }
 
-@keyframes fm-fade-in{ from{ opacity:0; transform: translateY(4px); } to{ opacity:1; transform: translateY(0); } }
-.fm-fade-in{ animation: fm-fade-in .18s ease-out; }
+/* Assinatura visual: uma linha fina de latão no topo de cada "vitrine" —
+   substitui a sombra cinzenta genérica repetida em todos os cartões. */
+.fm-panel{
+  position: relative;
+  border-top: 2px solid var(--brass);
+}
+
+@keyframes fm-fade-in{ from{ opacity:0; transform: translateY(3px); } to{ opacity:1; transform: translateY(0); } }
+.fm-fade-in{ animation: fm-fade-in .16s ease-out; }

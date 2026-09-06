@@ -23,3 +23,11 @@ export async function listarPedidosReposicao() {
 export async function dispensarPedidoReposicao(id) {
   return apiFetch(`/admin/reset-requests/${id}`, { method: "DELETE" });
 }
+
+export async function estadoDadosTeste() {
+  return apiFetch("/admin/seed-status");
+}
+
+export async function gerarDadosTeste() {
+  return apiFetch("/admin/seed", { method: "POST" });
+}

@@ -1,9 +1,9 @@
 import { X } from "lucide-react";
 
-export function Card({ children, className = "", ...rest }) {
+export function Card({ children, className = "", plain = false, ...rest }) {
   return (
     <div
-      className={`rounded-[var(--radius)] border bg-[var(--bg-panel)] border-[var(--line)] shadow-[var(--shadow)] ${className}`}
+      className={`rounded-[var(--radius)] border bg-[var(--bg-panel)] border-[var(--line)] ${plain ? "" : "fm-panel"} ${className}`}
       {...rest}
     >
       {children}
@@ -21,7 +21,7 @@ export function Badge({ children, tone = "neutral", className = "" }) {
   };
   return (
     <span
-      className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-[11px] font-medium whitespace-nowrap ${tones[tone] || tones.neutral} ${className}`}
+      className={`inline-flex items-center gap-1 rounded-sm border px-2.5 py-0.5 text-[11px] font-medium whitespace-nowrap ${tones[tone] || tones.neutral} ${className}`}
     >
       {children}
     </span>
@@ -50,7 +50,7 @@ export function Button({ children, variant = "primary", className = "", ...rest 
 export function IconButton({ children, className = "", ...rest }) {
   return (
     <button
-      className={`inline-flex items-center justify-center h-9 w-9 rounded-full border border-transparent text-[var(--ink-soft)] hover:bg-[var(--bg-panel-alt)] transition ${className}`}
+      className={`inline-flex items-center justify-center h-9 w-9 rounded-sm border border-transparent text-[var(--ink-soft)] hover:bg-[var(--bg-panel-alt)] transition ${className}`}
       {...rest}
     >
       {children}
@@ -61,7 +61,7 @@ export function IconButton({ children, className = "", ...rest }) {
 export function Field({ label, children, hint }) {
   return (
     <label className="block">
-      <span className="text-xs font-medium text-[var(--ink-soft)] uppercase tracking-wide">
+      <span className="text-[13px] text-[var(--ink-soft)]">
         {label}
       </span>
       <div className="mt-1.5">{children}</div>
@@ -71,7 +71,7 @@ export function Field({ label, children, hint }) {
 }
 
 const inputBase =
-  "w-full rounded-[var(--radius-sm)] border border-[var(--line)] bg-[var(--bg)] px-3 py-2 text-sm text-[var(--ink)] outline-none focus:border-[var(--wine-soft)] focus:ring-2 focus:ring-[color-mix(in_srgb,var(--wine)_20%,transparent)] transition";
+  "w-full rounded-[var(--radius-sm)] border border-[var(--line)] bg-[var(--bg-panel)] px-3 py-2 text-sm text-[var(--ink)] outline-none focus:border-[var(--wine)] focus:ring-1 focus:ring-[var(--wine)] transition";
 
 export function Input(props) {
   return <input className={inputBase} {...props} />;
@@ -90,12 +90,12 @@ export function Select({ children, ...rest }) {
 export function Modal({ title, onClose, children, footer, width = "max-w-lg" }) {
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 fm-fade-in"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 fm-fade-in"
       onMouseDown={(e) => e.target === e.currentTarget && onClose?.()}
     >
-      <div className={`w-full ${width} rounded-[var(--radius)] bg-[var(--bg-panel)] border border-[var(--line)] shadow-[var(--shadow)] max-h-[90vh] flex flex-col`}>
+      <div className={`w-full ${width} rounded-[var(--radius)] bg-[var(--bg-panel)] border border-[var(--line)] fm-panel max-h-[90vh] flex flex-col`}>
         <div className="flex items-center justify-between border-b border-[var(--line)] px-5 py-4">
-          <h2 className="font-display text-lg text-[var(--ink)]">{title}</h2>
+          <h2 className="font-display text-xl text-[var(--ink)]">{title}</h2>
           <IconButton onClick={onClose}>
             <X size={18} />
           </IconButton>
@@ -113,11 +113,11 @@ export function Modal({ title, onClose, children, footer, width = "max-w-lg" }) 
 
 export function Drawer({ title, subtitle, onClose, children }) {
   return (
-    <div className="fixed inset-0 z-50 flex justify-end bg-black/40" onMouseDown={(e) => e.target === e.currentTarget && onClose?.()}>
-      <div className="h-full w-full max-w-md overflow-y-auto bg-[var(--bg-panel)] border-l border-[var(--line)] shadow-[var(--shadow)] fm-fade-in">
+    <div className="fixed inset-0 z-50 flex justify-end bg-black/50" onMouseDown={(e) => e.target === e.currentTarget && onClose?.()}>
+      <div className="h-full w-full max-w-md overflow-y-auto bg-[var(--bg-panel)] border-l-2 border-[var(--brass)] fm-fade-in">
         <div className="sticky top-0 flex items-start justify-between border-b border-[var(--line)] bg-[var(--bg-panel)] px-5 py-4">
           <div>
-            <h2 className="font-display text-lg text-[var(--ink)]">{title}</h2>
+            <h2 className="font-display text-xl text-[var(--ink)]">{title}</h2>
             {subtitle && <p className="text-xs text-[var(--ink-soft)] mt-0.5">{subtitle}</p>}
           </div>
           <IconButton onClick={onClose}>
@@ -157,15 +157,13 @@ export function KpiCard({ label, value, sub, tone = "wine", icon }) {
     rust: "text-[var(--rust)]",
   };
   return (
-    <Card className="p-4 flex flex-col gap-2">
-      <div className="flex items-center justify-between">
-        <span className="text-xs font-medium uppercase tracking-wide text-[var(--ink-soft)]">
-          {label}
-        </span>
-        <span className={tones[tone]}>{icon}</span>
+    <div className="border-b-2 pb-3" style={{ borderColor: `var(--${tone === "wine" ? "wine" : tone})` }}>
+      <div className="flex items-center justify-between text-[var(--ink-soft)]">
+        <span className="text-[13px]">{label}</span>
+        {icon && <span className={tones[tone]}>{icon}</span>}
       </div>
-      <span className="font-display text-2xl text-[var(--ink)]">{value}</span>
-      {sub && <span className="text-xs text-[var(--ink-soft)]">{sub}</span>}
-    </Card>
+      <p className="font-display text-4xl text-[var(--ink)] mt-1">{value}</p>
+      {sub && <p className="text-xs text-[var(--ink-soft)] mt-1">{sub}</p>}
+    </div>
   );
 }

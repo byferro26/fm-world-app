@@ -125,7 +125,7 @@ function VendaForm({ pessoas, produtos, onClose }) {
         </div>
 
         <div>
-          <p className="text-xs font-medium uppercase tracking-wide text-[var(--ink-soft)] mb-2">Artigos</p>
+          <p className="text-[13px] text-[var(--ink-soft)] mb-2">Artigos</p>
           <div className="space-y-2">
             {linhas.map((l, i) => (
               <div key={i} className="flex items-center gap-2">

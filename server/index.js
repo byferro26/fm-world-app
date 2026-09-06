@@ -5,12 +5,21 @@ import { fileURLToPath } from "url";
 import bcrypt from "bcryptjs";
 import { pool, migrate } from "./db.js";
 import { registerUser, loginUser, signToken, authMiddleware, requireAdmin } from "./auth.js";
+import { jaTemDados, seedDados } from "./seed.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
 app.use(express.json());
 
 const COLLECTIONS = ["pessoas", "produtos", "vendas", "financeiro", "agenda", "tarefas", "documentos", "chat"];
+const PLANO_ID = "00000000-0000-0000-0000-000000000001";
+const LIMITES_FREE = { pessoas: 15, produtos: 5 };
+const MODULOS_PRO = ["chat", "documentos"];
+
+async function obterPlano() {
+  const r = await pool.query("SELECT data FROM documents WHERE collection='settings' AND id=$1", [PLANO_ID]);
+  return r.rows[0]?.data?.plano || "free";
+}
 
 function checkCollection(req, res, next) {
   if (!COLLECTIONS.includes(req.params.name)) return res.status(404).json({ error: "unknown_collection" });
@@ -118,8 +127,47 @@ app.delete("/api/admin/reset-requests/:id", authMiddleware, requireAdmin, async 
   res.json({ ok: true });
 });
 
+app.get("/api/admin/seed-status", authMiddleware, requireAdmin, async (req, res) => {
+  res.json({ jaTemDados: await jaTemDados() });
+});
+
+app.post("/api/admin/seed", authMiddleware, requireAdmin, async (req, res) => {
+  try {
+    const resumo = await seedDados();
+    res.json({ ok: true, resumo });
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ error: "Erro ao gerar dados de teste." });
+  }
+});
+
+// ---------- Plano (gratuito / pago) ----------
+app.get("/api/settings/plano", authMiddleware, async (req, res) => {
+  const plano = await obterPlano();
+  const contagens = {};
+  for (const nome of Object.keys(LIMITES_FREE)) {
+    const r = await pool.query("SELECT COUNT(*)::int AS n FROM documents WHERE collection=$1", [nome]);
+    contagens[nome] = r.rows[0].n;
+  }
+  res.json({ plano, limites: LIMITES_FREE, modulosPro: MODULOS_PRO, contagens });
+});
+
+app.patch("/api/settings/plano", authMiddleware, requireAdmin, async (req, res) => {
+  const { plano } = req.body || {};
+  if (!["free", "pro"].includes(plano)) return res.status(400).json({ error: "Plano inválido." });
+  await pool.query(
+    "UPDATE documents SET data = data || $1::jsonb, updated_at = now() WHERE collection='settings' AND id=$2",
+    [JSON.stringify({ plano }), PLANO_ID]
+  );
+  res.json({ plano });
+});
+
 // ---------- Coleções genéricas (pessoas, produtos, agenda, tarefas, documentos, chat, financeiro, vendas) ----------
 app.get("/api/collections/:name", authMiddleware, checkCollection, async (req, res) => {
+  const plano = await obterPlano();
+  if (plano === "free" && MODULOS_PRO.includes(req.params.name)) {
+    return res.status(402).json({ error: "Este módulo está disponível apenas no plano Pro.", pro: true });
+  }
   const r = await pool.query(
     "SELECT id, data, created_at, updated_at FROM documents WHERE collection=$1 ORDER BY created_at ASC",
     [req.params.name]
@@ -128,6 +176,19 @@ app.get("/api/collections/:name", authMiddleware, checkCollection, async (req, r
 });
 
 app.post("/api/collections/:name", authMiddleware, checkCollection, async (req, res) => {
+  const plano = await obterPlano();
+  if (plano === "free" && MODULOS_PRO.includes(req.params.name)) {
+    return res.status(402).json({ error: "Este módulo está disponível apenas no plano Pro.", pro: true });
+  }
+  if (plano === "free" && LIMITES_FREE[req.params.name] != null) {
+    const r = await pool.query("SELECT COUNT(*)::int AS n FROM documents WHERE collection=$1", [req.params.name]);
+    if (r.rows[0].n >= LIMITES_FREE[req.params.name]) {
+      return res.status(402).json({
+        error: `O plano gratuito permite até ${LIMITES_FREE[req.params.name]} registos em ${req.params.name}. Passa a Pro para continuares.`,
+        pro: true,
+      });
+    }
+  }
   const id = crypto.randomUUID();
   const data = req.body || {};
   await pool.query("INSERT INTO documents (collection, id, data) VALUES ($1,$2,$3)", [req.params.name, id, data]);

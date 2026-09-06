@@ -27,7 +27,7 @@ export default function Tarefas() {
             const tarefasColuna = items.filter((t) => t.estado === coluna);
             return (
               <div key={coluna}>
-                <p className="mb-2 flex items-center justify-between text-xs font-semibold uppercase tracking-wide text-[var(--ink-soft)]">
+                <p className="mb-2 flex items-center justify-between font-display text-lg text-[var(--ink)]">
                   {coluna}
                   <span className="rounded-full bg-[var(--bg-panel-alt)] px-2 py-0.5">{tarefasColuna.length}</span>
                 </p>
