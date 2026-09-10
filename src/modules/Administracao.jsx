@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { KeyRound, Trash2, ShieldCheck, Inbox, Gem, Check, Database } from "lucide-react";
+import { KeyRound, Trash2, ShieldCheck, Inbox, Database, Gem } from "lucide-react";
 import {
   listarUtilizadores,
   atualizarUtilizador,
@@ -10,10 +10,9 @@ import {
   estadoDadosTeste,
   gerarDadosTeste,
 } from "../lib/admin";
-import { atualizarPlano } from "../lib/plano";
 import { Badge, Button, Card, EmptyState, Modal, Select, Spinner } from "../components/ui";
 
-export default function Administracao({ user, plano, onPlanoChange }) {
+export default function Administracao({ user }) {
   const [utilizadores, setUtilizadores] = useState(null);
   const [pedidos, setPedidos] = useState(null);
   const [resetAlvo, setResetAlvo] = useState(null); // { id, nome } | null
@@ -58,6 +57,11 @@ export default function Administracao({ user, plano, onPlanoChange }) {
     carregar();
   }
 
+  async function mudarPlanoUtilizador(id, plano) {
+    await atualizarUtilizador(id, { plano });
+    carregar();
+  }
+
   async function confirmarReset(novaPasswordEscolhida) {
     const r = await reporPassword(resetAlvo.id, novaPasswordEscolhida || undefined);
     setNovaPassword(r.password);
@@ -71,25 +75,27 @@ export default function Administracao({ user, plano, onPlanoChange }) {
     carregar();
   }
 
-  async function mudarPlano(novo) {
-    await atualizarPlano(novo);
-    onPlanoChange?.();
-  }
-
   if (!utilizadores) {
     return <div className="flex h-48 items-center justify-center"><Spinner /></div>;
   }
 
   return (
     <div className="space-y-6 fm-fade-in">
-      <PlanoCard plano={plano} onMudar={mudarPlano} />
+      <Card className="p-5">
+        <h3 className="font-display text-lg mb-2 flex items-center gap-2">
+          <Gem size={18} /> Planos
+        </h3>
+        <p className="text-sm text-[var(--ink-soft)]">
+          Cada parceiro tem o seu próprio plano — <strong>Standard</strong> (acesso normal) ou <strong>Pro</strong> (inclui Comunicações em massa e avisos automáticos por WhatsApp). Muda o plano de cada pessoa na lista abaixo depois de confirmares o pagamento — isto ainda é feito à mão, sem ligação a um processador de pagamentos real.
+        </p>
+      </Card>
 
       <Card className="p-5">
         <h3 className="font-display text-lg mb-2 flex items-center gap-2">
           <Database size={18} /> Dados de teste
         </h3>
         <p className="text-sm text-[var(--ink-soft)] mb-3">
-          Preenche todos os módulos (Pessoas, Produtos, Vendas, Financeiro, Agenda, Tarefas, Documentos, Chat) com exemplos realistas, incluindo uma pequena rede de parceiros já ligada por patrocinador — útil para veres cada ecrã preenchido antes de começares a introduzir dados reais.
+          Preenche os módulos (Pessoas, Financeiro, Agenda, Tarefas, Documentos, Chat) com exemplos realistas, incluindo uma pequena rede de parceiros já ligada por patrocinador — útil para veres cada ecrã preenchido antes de começares a introduzir dados reais.
         </p>
         <Button variant="secondary" onClick={correrSeed} disabled={aGerar}>
           {aGerar ? "A gerar..." : temDados ? "Gerar mais dados de exemplo" : "Gerar dados de teste"}
@@ -134,7 +140,7 @@ export default function Administracao({ user, plano, onPlanoChange }) {
         </h3>
         <div className="divide-y divide-[var(--line)]">
           {utilizadores.map((u) => (
-            <div key={u.id} className="flex items-center gap-3 py-2.5">
+            <div key={u.id} className="flex items-center gap-3 py-2.5 flex-wrap">
               <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[var(--wine-soft)] text-xs font-semibold text-white">
                 {u.nome?.slice(0, 1).toUpperCase() || "?"}
               </div>
@@ -142,6 +148,16 @@ export default function Administracao({ user, plano, onPlanoChange }) {
                 <p className="truncate text-sm font-medium">{u.nome}{u.id === user?.uid && <span className="text-[var(--ink-soft)] font-normal"> (tu)</span>}</p>
                 <p className="truncate text-xs text-[var(--ink-soft)]">{u.email}</p>
               </div>
+              {u.papel !== "admin" && (
+                <Select
+                  className="w-auto text-xs py-1"
+                  value={u.plano || "standard"}
+                  onChange={(e) => mudarPlanoUtilizador(u.id, e.target.value)}
+                >
+                  <option value="standard">Standard</option>
+                  <option value="pro">Pro</option>
+                </Select>
+              )}
               <Select
                 className="w-auto text-xs py-1"
                 value={u.papel}
@@ -177,60 +193,6 @@ export default function Administracao({ user, plano, onPlanoChange }) {
         </Modal>
       )}
     </div>
-  );
-}
-
-function PlanoCard({ plano, onMudar }) {
-  if (!plano) return null;
-  const isFree = plano.plano === "free";
-
-  return (
-    <Card className="p-5">
-      <div className="flex items-center justify-between mb-4">
-        <h3 className="font-display text-lg flex items-center gap-2">
-          <Gem size={18} /> Plano
-        </h3>
-        <Badge tone={isFree ? "neutral" : "gold"}>{isFree ? "Gratuito" : "Pro"}</Badge>
-      </div>
-
-      {isFree && (
-        <div className="space-y-3 mb-4">
-          {Object.entries(plano.limites || {}).map(([nome, limite]) => {
-            const usado = plano.contagens?.[nome] ?? 0;
-            const pct = Math.min(100, Math.round((usado / limite) * 100));
-            return (
-              <div key={nome}>
-                <div className="flex items-center justify-between text-xs text-[var(--ink-soft)] mb-1">
-                  <span className="capitalize">{nome}</span>
-                  <span>{usado} / {limite}</span>
-                </div>
-                <div className="h-1.5 rounded-full bg-[var(--bg-panel-alt)] overflow-hidden">
-                  <div className="h-full bg-[var(--gold)]" style={{ width: `${pct}%` }} />
-                </div>
-              </div>
-            );
-          })}
-          <p className="text-xs text-[var(--ink-soft)]">Chat e Documentos ficam disponíveis a partir do plano Pro.</p>
-        </div>
-      )}
-
-      <div className="grid sm:grid-cols-2 gap-3">
-        <div className={`rounded-[var(--radius-sm)] border p-3 ${isFree ? "border-[var(--wine)]" : "border-[var(--line)]"}`}>
-          <p className="font-medium text-sm flex items-center gap-1.5">{isFree && <Check size={14} className="text-[var(--wine)]" />} Gratuito</p>
-          <p className="text-xs text-[var(--ink-soft)] mt-1">Até {plano.limites?.pessoas} pessoas, {plano.limites?.produtos} produtos. Sem Chat nem Documentos.</p>
-          {!isFree && <Button variant="secondary" className="mt-2 w-full" onClick={() => onMudar("free")}>Voltar ao gratuito</Button>}
-        </div>
-        <div className={`rounded-[var(--radius-sm)] border p-3 ${!isFree ? "border-[var(--wine)]" : "border-[var(--line)]"}`}>
-          <p className="font-medium text-sm flex items-center gap-1.5">{!isFree && <Check size={14} className="text-[var(--wine)]" />} Pro</p>
-          <p className="text-xs text-[var(--ink-soft)] mt-1">Sem limites de registos, com Chat e Documentos incluídos.</p>
-          {isFree && <Button className="mt-2 w-full" onClick={() => onMudar("pro")}>Passar a Pro</Button>}
-        </div>
-      </div>
-
-      <p className="mt-4 text-xs text-[var(--ink-soft)]">
-        Isto ainda não está ligado a um processador de pagamentos real — a mudança de plano aqui é imediata e sem cobrança. Para pagamentos a sério, é preciso ligar uma conta Stripe (ou semelhante).
-      </p>
-    </Card>
   );
 }
 

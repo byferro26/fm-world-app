@@ -7,18 +7,16 @@ import Painel from "./modules/Painel";
 import Pessoas from "./modules/Pessoas";
 import Agenda from "./modules/Agenda";
 import Tarefas from "./modules/Tarefas";
-import Vendas from "./modules/Vendas";
-import Produtos from "./modules/Produtos";
 import Financeiro from "./modules/Financeiro";
 import Wiki from "./modules/Wiki";
 import Equipa from "./modules/Equipa";
 import Chat from "./modules/Chat";
+import Comunicacoes from "./modules/Comunicacoes";
 import Definicoes from "./modules/Definicoes";
 import Administracao from "./modules/Administracao";
 import UpgradeGate from "./components/UpgradeGate";
 import { Spinner } from "./components/ui";
 import { sair } from "./lib/auth";
-import { usePlano, atualizarPlano } from "./lib/plano";
 
 function useTheme() {
   const [theme, setTheme] = useState(() => localStorage.getItem("fm_theme") || "system");
@@ -41,7 +39,6 @@ export default function App() {
   const [view, setView] = useState("painel");
   const [mobileOpen, setMobileOpen] = useState(false);
   const [theme, setTheme] = useTheme();
-  const { info: plano, recarregar: recarregarPlano } = usePlano(Boolean(user));
 
   useEffect(() => {
     return watchAuth(setUser);
@@ -56,9 +53,7 @@ export default function App() {
     setUser(null);
   }
 
-  function bloqueado(modulo) {
-    return plano?.plano === "free" && plano?.modulosPro?.includes(modulo);
-  }
+  const temPro = user?.papel === "admin" || user?.plano === "pro";
 
   if (user === undefined) {
     return (
@@ -76,7 +71,6 @@ export default function App() {
         active={view}
         onNavigate={(v) => { setView(v); setMobileOpen(false); }}
         user={user}
-        plano={plano}
         onSignOut={handleSignOut}
         open={mobileOpen}
         onCloseMobile={() => setMobileOpen(false)}
@@ -88,28 +82,22 @@ export default function App() {
           {view === "pessoas" && <Pessoas />}
           {view === "agenda" && <Agenda />}
           {view === "tarefas" && <Tarefas />}
-          {view === "vendas" && <Vendas />}
-          {view === "produtos" && <Produtos />}
           {view === "financeiro" && <Financeiro />}
-          {view === "wiki" && (bloqueado("documentos") ? (
-            <UpgradeGate
-              titulo="Documentos é um módulo Pro"
-              mensagem="A biblioteca de materiais está disponível no plano Pro."
-              isAdmin={user?.papel === "admin"}
-              onUpgrade={async () => { await atualizarPlano("pro"); recarregarPlano(); }}
-            />
-          ) : <Wiki />)}
+          {view === "wiki" && <Wiki />}
           {view === "equipa" && <Equipa />}
-          {view === "chat" && (bloqueado("chat") ? (
+          {view === "chat" && <Chat user={user} />}
+          {view === "comunicacoes" && (temPro ? (
+            <Comunicacoes />
+          ) : (
             <UpgradeGate
-              titulo="Chat é um módulo Pro"
-              mensagem="A comunicação interna da equipa está disponível no plano Pro."
-              isAdmin={user?.papel === "admin"}
-              onUpgrade={async () => { await atualizarPlano("pro"); recarregarPlano(); }}
+              titulo="Comunicações é uma funcionalidade Pro"
+              mensagem="Mensagens em massa e avisos automáticos por WhatsApp ficam disponíveis no plano Pro. Fala com um administrador para ativares."
+              isAdmin={false}
+              onUpgrade={() => {}}
             />
-          ) : <Chat user={user} />)}
+          ))}
           {view === "definicoes" && <Definicoes user={user} theme={theme} onSetTheme={setTheme} />}
-          {view === "administracao" && user?.papel === "admin" && <Administracao user={user} plano={plano} onPlanoChange={recarregarPlano} />}
+          {view === "administracao" && user?.papel === "admin" && <Administracao user={user} />}
         </main>
       </div>
     </div>

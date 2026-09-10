@@ -15,7 +15,7 @@ export async function registerUser({ nome, email, password }) {
     "INSERT INTO users (id, email, password_hash, nome, papel) VALUES ($1,$2,$3,$4,$5)",
     [id, email.toLowerCase().trim(), hash, nome, papel]
   );
-  return { id, email: email.toLowerCase().trim(), nome, papel };
+  return { id, email: email.toLowerCase().trim(), nome, papel, plano: "standard" };
 }
 
 export async function loginUser({ email, password }) {

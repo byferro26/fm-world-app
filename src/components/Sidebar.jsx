@@ -1,14 +1,13 @@
 import {
   LayoutDashboard,
   Users,
-  ShoppingBag,
-  Package,
   Wallet,
   Calendar,
   Kanban,
   BookOpen,
   Network,
   MessageCircle,
+  Megaphone,
   Settings,
   ShieldCheck,
   LogOut,
@@ -19,19 +18,18 @@ import {
 export const NAV_ITEMS = [
   { id: "painel", label: "Painel", icon: LayoutDashboard },
   { id: "pessoas", label: "Pessoas", icon: Users },
-  { id: "vendas", label: "Vendas", icon: ShoppingBag },
-  { id: "produtos", label: "Produtos", icon: Package },
   { id: "financeiro", label: "Financeiro", icon: Wallet },
   { id: "agenda", label: "Agenda", icon: Calendar },
   { id: "tarefas", label: "Tarefas", icon: Kanban },
-  { id: "wiki", label: "Documentos", icon: BookOpen, proKey: "documentos" },
+  { id: "wiki", label: "Documentos", icon: BookOpen },
   { id: "equipa", label: "Equipa & Rede", icon: Network },
-  { id: "chat", label: "Chat", icon: MessageCircle, proKey: "chat" },
+  { id: "chat", label: "Chat", icon: MessageCircle },
+  { id: "comunicacoes", label: "Comunicações", icon: Megaphone, pro: true },
 ];
 
-export default function Sidebar({ active, onNavigate, user, plano, onSignOut, open, onCloseMobile }) {
+export default function Sidebar({ active, onNavigate, user, onSignOut, open, onCloseMobile }) {
   function bloqueado(item) {
-    return item.proKey && plano?.plano === "free" && plano?.modulosPro?.includes(item.proKey);
+    return item.pro && user?.papel !== "admin" && user?.plano !== "pro";
   }
   return (
     <>
@@ -109,8 +107,9 @@ export default function Sidebar({ active, onNavigate, user, plano, onSignOut, op
             </div>
             <div className="min-w-0 flex-1">
               <p className="truncate text-sm">{user?.nome || user?.email}</p>
-              <p className="truncate text-[11px] text-[var(--ink-on-dark-soft)] capitalize">
-                {user?.papel || "parceiro"}
+              <p className="truncate text-[11px] text-[var(--ink-on-dark-soft)]">
+                <span className="capitalize">{user?.papel || "parceiro"}</span>
+                {user?.papel !== "admin" && <span> · {user?.plano === "pro" ? "Pro" : "Standard"}</span>}
               </p>
             </div>
             <button

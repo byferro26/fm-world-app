@@ -13,8 +13,11 @@ export async function migrate() {
       password_hash TEXT NOT NULL,
       nome TEXT,
       papel TEXT NOT NULL DEFAULT 'parceiro',
+      plano TEXT NOT NULL DEFAULT 'standard',
       created_at TIMESTAMPTZ NOT NULL DEFAULT now()
     );
+
+    ALTER TABLE users ADD COLUMN IF NOT EXISTS plano TEXT NOT NULL DEFAULT 'standard';
 
     CREATE TABLE IF NOT EXISTS documents (
       collection TEXT NOT NULL,
@@ -26,9 +29,5 @@ export async function migrate() {
     );
 
     CREATE INDEX IF NOT EXISTS idx_documents_collection ON documents(collection);
-
-    INSERT INTO documents (collection, id, data)
-    VALUES ('settings', '00000000-0000-0000-0000-000000000001', '{"plano":"free"}'::jsonb)
-    ON CONFLICT (collection, id) DO NOTHING;
   `);
 }

@@ -6,10 +6,11 @@ import Calendario from "../components/Calendario";
 
 const TIPOS = ["Reunião", "Formação", "Evento", "Chamada", "Sessão com Cliente", "Entrega", "Outro"];
 const ESTADOS = ["Agendado", "Confirmado", "Concluído", "Cancelado"];
-const vazio = { titulo: "", tipo: "Reunião", data: new Date().toISOString().slice(0, 10), hora: "", local: "", estado: "Agendado", notas: "" };
+const vazio = { titulo: "", tipo: "Reunião", data: new Date().toISOString().slice(0, 10), hora: "", local: "", estado: "Agendado", pessoaId: "", notas: "" };
 
 export default function Agenda() {
   const { items, loading } = useCollection("agenda", { orderByField: "data" });
+  const { items: pessoas } = useCollection("pessoas", { orderByField: "nome" });
   const [aCriar, setACriar] = useState(false);
   const [vista, setVista] = useState("calendario"); // "calendario" | "lista"
   const [diaPreSelecionado, setDiaPreSelecionado] = useState(null);
@@ -96,6 +97,7 @@ export default function Agenda() {
       {aCriar && (
         <AgendaForm
           initial={diaPreSelecionado ? { ...vazio, data: diaPreSelecionado } : vazio}
+          pessoas={pessoas}
           onClose={() => setACriar(false)}
           onSave={async (data) => { await addItem("agenda", data); setACriar(false); }}
         />
@@ -113,10 +115,11 @@ function formatarData(iso) {
   }
 }
 
-function AgendaForm({ initial, onClose, onSave }) {
+function AgendaForm({ initial, pessoas, onClose, onSave }) {
   const [form, setForm] = useState(initial || vazio);
   const [saving, setSaving] = useState(false);
   const set = (k) => (e) => setForm({ ...form, [k]: e.target.value });
+  const pessoaEscolhida = pessoas?.find((p) => p.id === form.pessoaId);
 
   return (
     <Modal
@@ -143,6 +146,12 @@ function AgendaForm({ initial, onClose, onSave }) {
           </Field>
           <Field label="Local ou link"><Input value={form.local} onChange={set("local")} /></Field>
         </div>
+        <Field label="Pessoa (opcional)" hint={pessoaEscolhida ? (pessoaEscolhida.telefone ? "Avisamos automaticamente por WhatsApp ao guardar." : "Esta pessoa não tem telefone guardado — não é possível avisar.") : undefined}>
+          <Select value={form.pessoaId || ""} onChange={set("pessoaId")}>
+            <option value="">Nenhuma</option>
+            {pessoas?.map((p) => <option key={p.id} value={p.id}>{p.nome}</option>)}
+          </Select>
+        </Field>
         <Field label="Notas"><Textarea value={form.notas} onChange={set("notas")} rows={3} /></Field>
       </div>
     </Modal>
